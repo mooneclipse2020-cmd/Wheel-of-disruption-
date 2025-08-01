@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>💀 The Wheel of Disruption 💀</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: sans-serif;
+      color: #fff;
+    }
+    canvas {
+      display: block;
+    }
+    #spinBtn {
+      position: absolute;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      padding: 12px 24px;
+      background: #00ffff;
+      border: none;
+      font-size: 22px;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 12px;
+      box-shadow: 0 0 15px #fff;
+      color: black;
+    }
+    #title {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 36px;
+      font-weight: bold;
+      color: #ff00ff;
+      text-shadow: 0 0 20px lime;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div id="title">💥 THE MEME WHEEL OF DISRUPTION 💥</div>
+  <button id="spinBtn">UNLEASH MAYHEM</button>
+  <canvas id="wheelCanvas"></canvas>
+
+  <!-- Embedded Meme Sounds -->
+  <audio id="bgMusic" loop>
+    <source src="https://cdn.pixabay.com/audio/2022/12/30/audio_3e25bf49d3.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="boomSound">
+    <source src="https://www.myinstants.com/media/sounds/vine-boom.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="bruhSound">
+    <source src="https://www.myinstants.com/media/sounds/movie_1_bruh.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const options = [
+      "Gym Rat", "Gula Foola", "Mayor of Ohio", "Schizo Fiver",
+      "Accent Artist", "The Screen", "Golden Ticket", "Hold Up",
+      "Music to My Ears (Jackbutt Torture)", "Dance Fever"
+    ];
+
+    const canvas = document.getElementById('wheelCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const bgMusic = document.getElementById("bgMusic");
+    const boomSound = document.getElementById("boomSound");
+    const bruhSound = document.getElementById("bruhSound");
+    const spinBtn = document.getElementById("spinBtn");
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = Math.min(canvas.width, canvas.height) / 3;
+    const segmentAngle = 2 * Math.PI / options.length;
+    const colors = options.map((_, i) =>
+      `hsl(${i * (360 / options.length)}, 100%, 55%)`
+    );
+
+    let angle = 0;
+    let spinning = false;
+    let spinVelocity = 0;
+    let explosions = [];
+    let screenShake = 0;
+    let hueShift = 0;
+
+    function drawExplosion(x, y, radius, alpha) {
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      ctx.fillStyle = `rgba(255, ${Math.random()*255}, 0, ${alpha})`;
+      ctx.fill();
+    }
+
+    function drawWheel() {
+      ctx.save();
+      if (screenShake > 0) {
+        ctx.translate(Math.random() * screenShake - screenShake / 2, Math.random() * screenShake - screenShake / 2);
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      document.body.style.background = `hsl(${hueShift}, 100%, 10%)`;
+
+      for (let i = 0; i < options.length; i++) {
+        const startAngle = angle + i * segmentAngle;
+        const endAngle = startAngle + segmentAngle;
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.fillStyle = colors[i];
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(startAngle + segmentAngle / 2);
+        ctx.fillStyle = '#000';
+        ctx.font = "bold 18px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(options[i], radius - 10, 5);
+        ctx.restore();
+      }
+
+      // Center button
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 35, 0, 2 * Math.PI);
+      ctx.fillStyle = "#fff";
+      ctx.fill();
+
+      // Pointer
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY - radius - 20);
+      ctx.lineTo(centerX - 15, centerY - radius - 60);
+      ctx.lineTo(centerX + 15, centerY - radius - 60);
+      ctx.closePath();
+      ctx.fillStyle = "#f00";
+      ctx.fill();
+
+      // Draw particles
+      explosions = explosions.filter(e => e.alpha > 0);
+      explosions.forEach(e => {
+        drawExplosion(e.x, e.y, e.r, e.alpha);
+        e.r += 5;
+        e.alpha -= 0.03;
+      });
+
+      ctx.restore();
+    }
+
+    function triggerExplosion() {
+      for (let i = 0; i < 15; i++) {
+        explosions.push({
+          x: centerX + (Math.random() - 0.5) * radius * 1.5,
+          y: centerY + (Math.random() - 0.5) * radius * 1.5,
+          r: 20 + Math.random() * 20,
+          alpha: 1
+        });
+      }
+    }
+
+    function confettiBlast() {
+      const count = 300;
+      for (let i = 0; i < count; i++) {
+        explosions.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: 5 + Math.random() * 5,
+          alpha: 1
+        });
+      }
+    }
+
+    function animate() {
+      hueShift = (hueShift + 4) % 360;
+      if (spinning) {
+        angle += spinVelocity;
+        spinVelocity *= 0.985;
+        if (spinVelocity < 0.003) {
+          spinning = false;
+          bgMusic.pause();
+          boomSound.play();
+          screenShake = 40;
+          triggerExplosion();
+          confettiBlast();
+          setTimeout(() => {
+            bruhSound.play();
+          }, 500);
+          setTimeout(() => {
+            screenShake = 0;
+            const index = options.length - Math.floor(((angle % (2 * Math.PI)) / (2 * Math.PI)) * options.length) - 1;
+            alert(`🧠 THE MEME WHEEL HAS SPOKEN:\n👉 ${options[(index + options.length) % options.length]} 👈`);
+          }, 1200);
+        }
+      }
+      drawWheel();
+      requestAnimationFrame(animate);
+    }
+
+    spinBtn.onclick = () => {
+      if (!spinning) {
+        spinVelocity = Math.random() * 0.35 + 0.35;
+        spinning = true;
+        hueShift = 0;
+        bgMusic.currentTime = 0;
+        bgMusic.play();
+      }
+    };
+
+    drawWheel();
+    animate();
+  </script>
+</body>
+</html>
